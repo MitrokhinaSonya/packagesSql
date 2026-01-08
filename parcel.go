@@ -14,13 +14,13 @@ func NewParcelStore(db *sql.DB) ParcelStore {
 }
 
 func (s ParcelStore) Add(p Parcel) (int, error) {
-	res, err:= s.db.Exec("INSERT INTO parcel (client, status, address, created_at) VALUES (?, ?, ?, ?)", p.Client, p.Status, p.Address, p.CreatedAt)
+	res, err := s.db.Exec("INSERT INTO parcel (client, status, address, created_at) VALUES (?, ?, ?, ?)", p.Client, p.Status, p.Address, p.CreatedAt)
 	if err != nil {
 		return 0, err
 	}
 
 	var id int64
-	id, err= res.LastInsertId()
+	id, err = res.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
@@ -36,7 +36,7 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 	if err != nil {
 		return Parcel{}, err
 	}
-	
+
 	return p, nil
 }
 
@@ -50,8 +50,8 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	var res []Parcel
 	for rows.Next() {
 		var p Parcel
-		err := rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt) 
-        if err != nil {
+		err := rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
+		if err != nil {
 			return nil, err
 		}
 		res = append(res, p)
@@ -74,36 +74,36 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
-	p, err:= s.Get(number)
+	res, err:= s.db.Exec("UPDATE parcel SET address = ? WHERE number = ? AND status = ?", address, number, ParcelStatusRegistered)
 	if err != nil {
 		return err
 	}
 
-	if p.Status != ParcelStatusRegistered {
-		return fmt.Errorf("значение статуса не registered, значение статуса: %s", p.Status)
-	}
-
-	_, err = s.db.Exec("UPDATE parcel SET address = ? WHERE number = ?", address, number)
-
+	rowsCheck, err := res.RowsAffected()
 	if err != nil {
 		return err
 	}
+
+	if rowsCheck == 0 {
+		return fmt.Errorf("значение статуса не registered")
+	}
+
 	return nil
 }
 
 func (s ParcelStore) Delete(number int) error {
-	p, err:= s.Get(number)
+	res, err:= s.db.Exec("DELETE FROM parcel WHERE number = ? AND status = ?", number, ParcelStatusRegistered)
 	if err != nil {
 		return err
 	}
 
-	if p.Status != ParcelStatusRegistered {
-		return fmt.Errorf("значение статуса не registered, значение статуса: %s", p.Status)
-	}
-
-	_, err = s.db.Exec("DELETE FROM parcel WHERE number = ?", number)
+	rowsCheck, err := res.RowsAffected()
 	if err != nil {
 		return err
+	}
+
+	if rowsCheck == 0 {
+		return fmt.Errorf("значение статуса не registered")
 	}
 
 	return nil

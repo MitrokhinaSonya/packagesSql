@@ -6,8 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+//Я не совсем поняла, почему в некоторых случаях лучше assert вместо require в случае нашего кода.
+//Если объясните, то буду очень благодарна.
 
 var (
 	// randSource источник псевдо случайных чисел.
@@ -39,18 +42,15 @@ func TestAddGetDelete(t *testing.T) {
 	parcel := getTestParcel()
 
 	// add
-	id, err:= store.Add(parcel)
+	id, err := store.Add(parcel)
 	require.NoError(t, err)
 	require.NotZero(t, id)
 	parcel.Number = id
 
 	// get
-	getParcel, err:= store.Get(parcel.Number)
+	getParcel, err := store.Get(parcel.Number)
 	require.NoError(t, err)
-	require.Equal(t, parcel.Client, getParcel.Client)
-	require.Equal(t, parcel.Status, getParcel.Status)
-	require.Equal(t, parcel.Address, getParcel.Address)
-	require.Equal(t, parcel.CreatedAt, getParcel.CreatedAt)
+	assert.Equal(t, parcel, getParcel)
 
 	// delete
 	err = store.Delete(parcel.Number)
@@ -70,7 +70,7 @@ func TestSetAddress(t *testing.T) {
 	parcel := getTestParcel()
 
 	// add
-	id, err:= store.Add(parcel)
+	id, err := store.Add(parcel)
 	require.NoError(t, err)
 	require.NotZero(t, id)
 	parcel.Number = id
@@ -83,7 +83,7 @@ func TestSetAddress(t *testing.T) {
 	// check
 	updatedParcel, err := store.Get(parcel.Number)
 	require.NoError(t, err)
-	require.Equal(t, newAddress, updatedParcel.Address)
+	assert.Equal(t, newAddress, updatedParcel.Address)
 }
 
 // TestSetStatus проверяет обновление статуса
@@ -97,7 +97,7 @@ func TestSetStatus(t *testing.T) {
 	parcel := getTestParcel()
 
 	// add
-	id, err:= store.Add(parcel)
+	id, err := store.Add(parcel)
 	require.NoError(t, err)
 	require.NotZero(t, id)
 	parcel.Number = id
@@ -110,7 +110,7 @@ func TestSetStatus(t *testing.T) {
 	// check
 	updParcel, err := store.Get(parcel.Number)
 	require.NoError(t, err)
-	require.Equal(t, newStatus, updParcel.Status)
+	assert.Equal(t, newStatus, updParcel.Status)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
@@ -148,16 +148,12 @@ func TestGetByClient(t *testing.T) {
 	// get by client
 	storedParcels, err := store.GetByClient(client)
 	require.NoError(t, err)
-	require.Len(t, storedParcels, len(parcels))
+	assert.Len(t, storedParcels, len(parcels))
 
 	// check
 	for _, parcel := range storedParcels {
 		expec, ok := parcelMap[parcel.Number]
-		require.True(t, ok, "неизвестная посылка с номером %d", parcel.Number)
-
-		require.Equal(t, expec.Client, parcel.Client)
-		require.Equal(t, expec.Status, parcel.Status)
-		require.Equal(t, expec.Address, parcel.Address)
-		require.Equal(t, expec.CreatedAt, parcel.CreatedAt)
+		assert.True(t, ok, "неизвестная посылка с номером %d", parcel.Number)
+		assert.Equal(t, expec, parcel)
 	}
 }
